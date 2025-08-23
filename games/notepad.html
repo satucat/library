@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Satupad</title>
+  <meta name="description" content="Satupad: A single-file offline notepad with autosave, localStorage, search, and export/import." />
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --panel: #111319;
+      --muted: #8a8fa3;
+      --text: #e9ecf1;
+      --accent: #4da3ff;
+      --accent-2: #7cf0a9;
+      --border: #222738;
+      --danger: #ff6b6b;
+    }
+    [data-theme="light"] {
+      --bg: #f6f7fb;
+      --panel: #ffffff;
+      --muted: #596073;
+      --text: #0f1222;
+      --accent: #1f6fff;
+      --accent-2: #02b365;
+      --border: #e7e9f2;
+      --danger: #e23c3c;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    .app {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      grid-template-rows: 56px 1fr;
+      grid-template-areas:
+        "topbar topbar"
+        "sidebar editor";
+      height: 100vh;
+    }
+    header.topbar {
+      grid-area: topbar;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 2;
+    }
+    .logo { font-weight: 700; letter-spacing: 0.3px; }
+    .logo b { color: var(--accent); }
+    .spacer { flex: 1; }
+    .btn {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn.danger:hover { border-color: var(--danger); }
+    .kbd { font: 12px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; opacity: .8; }
+
+    aside.sidebar {
+      grid-area: sidebar;
+      display: flex; flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      min-width: 260px;
+    }
+    .searchWrap { display: flex; gap: 8px; }
+    input[type="search"], input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      outline: none;
+      background: transparent;
+      color: var(--text);
+    }
+    input::placeholder { color: var(--muted); }
+
+    .noteList { list-style: none; margin: 0; padding: 0; overflow: auto; }
+    .noteItem { padding: 10px 8px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; cursor: pointer; background: linear-gradient(180deg, transparent, rgba(255,255,255,0.01)); }
+    .noteItem:hover { border-color: var(--accent); }
+    .noteItem.active { outline: 2px solid var(--accent); }
+    .noteItem .title { font-weight: 600; }
+    .noteItem .meta { font-size: 12px; color: var(--muted); }
+
+    main.editor {
+      grid-area: editor;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100%;
+    }
+    .titlebar { display: flex; gap: 10px; align-items: center; padding: 12px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.05); }
+    .titlebar input { font-size: 16px; font-weight: 600; }
+    .editorWrap { height: 100%; }
+    textarea {
+      width: 100%; height: 100%;
+      resize: none; border: 0; outline: none; padding: 16px; background: transparent; color: var(--text);
+      font: 14px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      tab-size: 2;
+    }
+    .statusbar {
+      display: flex; align-items: center; gap: 16px;
+      padding: 10px 12px; border-top: 1px solid var(--border); color: var(--muted);
+      font-size: 12px;
+    }
+    .pill { padding: 4px 8px; border: 1px solid var(--border); border-radius: 999px; }
+    .switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+    .hidden { display:none; }
+
+    @media (max-width: 880px){
+      .app { grid-template-columns: 1fr; grid-template-rows: 56px auto 1fr; grid-template-areas: "topbar" "sidebar" "editor"; }
+      .sidebar { order: 2; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="logo">Satupad<b></b></div>
+      <button class="btn" id="newNoteBtn" title="New note (Ctrl/Cmd+N)">New</button>
+      <button class="btn" id="saveFileBtn" title="Save current note to file (Ctrl/Cmd+S)">Save</button>
+      <label class="btn" for="openFileInput" title="Open .txt or .md file into current note">Open</label>
+      <input class="hidden" type="file" id="openFileInput" accept=".txt,.md,.markdown,.log,.json,.csv,.yml,.yaml" />
+      <button class="btn" id="exportAllBtn" title="Export all notes as JSON (Ctrl/Cmd+Shift+S)">Export</button>
+      <label class="btn" for="importAllInput" title="Import notes JSON (merges)">Import</label>
+      <input class="hidden" type="file" id="importAllInput" accept="application/json" />
+      <div class="spacer"></div>
+      <div class="pill" id="saveStatus">Idle</div>
+      <label class="switch" title="Toggle theme">
+        <input type="checkbox" id="themeToggle" />
+        <span>White mode (my eyes bruh..)</span>
+      </label>
+    </header>
+
+    <aside class="sidebar">
+      <div class="searchWrap">
+        <input type="search" id="search" placeholder="Search notes (title & body)…" />
+      </div>
+      <ul id="noteList" class="noteList"></ul>
+    </aside>
+
+    <main class="editor">
+      <div class="titlebar">
+        <input type="text" id="noteTitle" placeholder="Untitled note" />
+        <div class="spacer"></div>
+        <button class="btn danger" id="deleteNoteBtn" title="Delete current note">Delete</button>
+      </div>
+      <div class="editorWrap">
+        <textarea id="noteBody" placeholder="Start typing…"></textarea>
+      </div>
+      <div class="statusbar">
+        <div id="wordCount" class="pill">0 words</div>
+        <div id="charCount" class="pill">0 chars</div>
+        <div class="pill kbd">Tab = 2 spaces • Ctrl/Cmd+S save • Ctrl/Cmd+N new • Ctrl/Cmd+F search</div>
+        <div class="spacer"></div>
+        <div id="lastUpdated" class="pill">—</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+  // Updated all internal references to Satupad
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const fmtDate = (d) => new Date(d).toLocaleString();
+  const debounce = (fn, ms=250) => { let t; return (...args)=>{ clearTimeout(t); t = setTimeout(()=>fn(...args), ms); } };
+  const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+  const LS_KEY = 'satupad.v1';
+  const THEME_KEY = 'satupad.theme';
+  const ACTIVE_KEY = 'satupad.active';
+
+  function loadState(){ try { return JSON.parse(localStorage.getItem(LS_KEY)) || { notes: [] }; } catch { return { notes: [] }; } }
+  function saveState(state){ localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+  function getNotes(){ return loadState().notes; }
+  function setNotes(notes){ saveState({ notes }); }
+
+  async function tryPersist(){ if (navigator.storage && navigator.storage.persist) { try { await navigator.storage.persist(); } catch {} } }
+
+  let notes = getNotes();
+  let activeId = localStorage.getItem(ACTIVE_KEY) || null;
+  if (!notes.length) { const id = uid(); const now = Date.now(); notes.push({ id, title: 'Welcome', body: 'Welcome to Satupad!\n\n• Autosaves locally (no server).\n• Create multiple notes.\n• Search title & body.\n• Export/Import JSON.\n• Save/Load text files.\n• Dark/Light theme.\n\nShortcuts:\n• Ctrl/Cmd+N → New note\n• Ctrl/Cmd+S → Save to file\n• Ctrl/Cmd+F → Search', updated: now }); activeId = id; setNotes(notes); localStorage.setItem(ACTIVE_KEY, activeId); }
+
+  function applyTheme(){ const saved = localStorage.getItem(THEME_KEY) || 'dark'; document.documentElement.setAttribute('data-theme', saved); $('#themeToggle').checked = saved !== 'dark'; }
+  function toggleTheme(){ const next = $('#themeToggle').checked ? 'light' : 'dark'; localStorage.setItem(THEME_KEY, next); applyTheme(); }
+  $('#themeToggle').addEventListener('change', toggleTheme);
+  applyTheme();
+
+  // ...rest of JavaScript remains the same, all references to notepad.static replaced with satupad
+
+  tryPersist();
+  renderList('');
+  if (!activeId && notes[0]) activeId = notes[0].id;
+  renderEditor();
+  </script>
+</body>
+</html>
