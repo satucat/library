@@ -1,0 +1,58 @@
+[
+  {
+    "title": "Deltarune",
+    "description": "Sequel to Undertale, made by Toby Fox!",
+    "url": "/games/deltarune.html",
+    "icon": "/icons/deltarune.webp",
+    "tags": ["rpg", "puzzle", "fighting"]
+  },
+  {
+    "title": "Block Blast",
+    "description": "Match and clear colorful blocks!",
+    "url": "/games/blockblast.html",
+    "icon": "/icons/blockblast.webp",
+    "tags": ["puzzle", "brain"]
+  },
+  {
+    "title": "Undertale",
+    "description": "A choice driven RPG, made by Toby Fox!",
+    "url": "/games/undertale.html",
+    "icon": "/icons/undertale.webp",
+    "tags": ["rpg", "puzzle", "fighting"]
+  },
+  {
+    "title": "Space Waves",
+    "description": "Fun Wave Game, like Geometry Dash!",
+    "url": "/games/spacewaves.html",
+    "icon": "/icons/spacewaves.webp",
+    "tags": ["wave", "gravity", "speed", "skill"]
+  },
+  {
+    "title": "Minecraft",
+    "description": "Block game made by Notch, on 1.12.2!",
+    "url": "/games/minecraft.html",
+    "icon": "/icons/minecraft.webp",
+    "tags": ["creativity", "survival"]
+  },
+  {
+    "title": "People Playground",
+    "description": "GMod, but with limited functionality, lol",
+    "url": "/games/people-playground.html",
+    "icon": "/icons/people-playground.webp",
+    "tags": ["sandbox", "physics", "ragdoll", "gore"]
+  },
+  {
+    "title": "Bridge Race",
+    "description": "Racing game where you collect bricks to bridge!",
+    "url": "/games/bridge-race.html",
+    "icon": "/icons/bridge-race.webp",
+    "tags": ["race", "bridge", "bridging"]
+  },
+  {
+    "title": "Notepad",
+    "description": "Simple notepad<br>why isnt this in /apps",
+    "url": "/games/notepad.html",
+    "icon": "/icons/notepad.webp",
+    "tags": ["race", "bridge", "bridging"]
+  }
+]
