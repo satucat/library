@@ -39,7 +39,7 @@
     "description": "GMod, but with limited functionality, lol",
     "url": "/games/people-playground.html",
     "icon": "/icons/people-playground.webp",
-    "tags": ["sandbox", "physics", "ragdoll", "gore"]
+    "tags": ["sandbox", "physics", "ragdoll"]
   },
   {
     "title": "Bridge Race",
